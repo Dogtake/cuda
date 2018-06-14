@@ -204,29 +204,31 @@ int main(int argc,char const *argv[]){
 		cudaMalloc((void **) &cuda_results,sizeof(int)*input_size);
 		cudaMalloc((void **) &cuda_lookup_table,sizeof(int)*input_size);
 
-		for (i=0;i<input_size;i++){
-			if (i<(int)(input_size*percent)){
-				lookup_table[i] = random_value[rand()%input_size];
-			}else{
-				lookup_table[i] = rand();
+		for (int j = 0;j<5;j++){
+			for (i=0;i<input_size;i++){
+				if (i<(int)(input_size*percent)){
+					lookup_table[i] = random_value[rand()%input_size];
+				}else{
+					lookup_table[i] = rand();
+				}
+			}	
+			cudaMemcpy(cuda_results,results,sizeof(int)*input_size,cudaMemcpyHostToDevice);
+			cudaMemcpy(cuda_lookup_table,lookup_table,sizeof(int)*input_size,cudaMemcpyHostToDevice);
+			
+			counter = 0;
+
+			start = clock();
+			LookUpKernel<<<block_num,block_size>>>(cuda_hash_table,cuda_a_list,cuda_b_list,t,n,p,cuda_lookup_table,cuda_results);
+			end = clock();
+
+			cudaMemcpy(results,cuda_results,sizeof(int)*input_size,cudaMemcpyDeviceToHost);
+			for(i =0;i<input_size;i++){
+				counter +=  results[i];
 			}
-		}	
-		cudaMemcpy(cuda_results,results,sizeof(int)*input_size,cudaMemcpyHostToDevice);
-		cudaMemcpy(cuda_lookup_table,lookup_table,sizeof(int)*input_size,cudaMemcpyHostToDevice);
-		
-		counter = 0;
-
-		start = clock();
-		LookUpKernel<<<block_num,block_size>>>(cuda_hash_table,cuda_a_list,cuda_b_list,t,n,p,cuda_lookup_table,cuda_results);
-		end = clock();
-
-		cudaMemcpy(results,cuda_results,sizeof(int)*input_size,cudaMemcpyDeviceToHost);
-		for(i =0;i<input_size;i++){
-			counter +=  results[i];
-		}
-		if (counter>=(int)(input_size*percent)){
-			// printf("counter = %d,percent = %d\n", counter,(int)(input_size*percent));
-			printf("%f\n",(double)(end-start)/CLOCKS_PER_SEC);
+			if (counter>=(int)(input_size*percent)){
+				// printf("counter = %d,percent = %d\n", counter,(int)(input_size*percent));
+				printf("%f\n",(double)(end-start)/CLOCKS_PER_SEC);
+			}
 		}
 		
 		free(lookup_table);

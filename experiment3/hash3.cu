@@ -66,11 +66,13 @@ int main(int argc,char const *argv[]){
 	int block_size;
 	int sum;
 	int flag;
+	float ts;
 	clock_t start,end;
 	
 
 	s = atoi(argv[1]);
 	t = atoi(argv[2]);
+	ts = (float)strtod(argv[4],NULL);
 	input_size = pow(2,s);
 	if (s == 24 ){
 		if (t==2){
@@ -79,8 +81,9 @@ int main(int argc,char const *argv[]){
 			input_size-=pow(2,15);
 		}
 	}
-	
-	n = unsigned(pow(2,25));
+	// n = unsigned(pow(2,25));
+	n = (int)(input_size*ts);
+	//printf("%d\n",n);
 	p = 85000173;
 	bound_length = (int)4*log(n);
 	block_num = input_size/256;
@@ -132,27 +135,35 @@ int main(int argc,char const *argv[]){
 	int count = 0;
 	int base = pow(2,24);
 	start=clock();
+	int first = 0;
 	while(1){
-		if (count == 0){
+		if (first == 0){
 			flag = 0;
 		}else{
 			flag =1;
 		}
 		sum = 0;
+		first = 1;
 		HashingKernel<<<block_num,block_size>>>(cuda_hash_table,cuda_a_list,cuda_b_list,cuda_random_value,cuda_func_index,n,p,cuda_kicked_list,t,flag);
 		CheckKickKernel<<<block_num,block_size>>>(cuda_hash_table,cuda_a_list,cuda_b_list,cuda_random_value,cuda_func_index,n,p,cuda_kicked_list,t);
 		cudaMemcpy(kicked_list,cuda_kicked_list,sizeof(int)*input_size,cudaMemcpyDeviceToHost);
 		for (i = 0;i<input_size;i++){
 			sum+=kicked_list[i];
 		}
-		base = min(base,sum);
-		// printf("base = %d\n",base );
+		// printf("sum=%d,base=%d\n",sum,base);
+		if(sum < base){
+			count = 0;
+			base = sum;
+		}else{
+			count += 1;
+		}
+		//printf("base = %d\n",base );
 		if (sum == 0){
 			break;
 		}
-		count += 1;
-		if(count > 4*bound_length){
+		if(count > 8*bound_length){
 			count = 0;
+			first = 0;
 			// printf("------------------------Restart!------------------------\n");
 			base = pow(2,24);
 			for (i = 0;i < t;i++){
@@ -181,7 +192,7 @@ int main(int argc,char const *argv[]){
 	cudaMemcpy(func_index,cuda_func_index,sizeof(int)*input_size,cudaMemcpyDeviceToHost);
 
 	
-	// printf("Exp1 Finished. Takes %f of time.\n",(double)(end-start)/CLOCKS_PER_SEC );
+	printf("%f\n",(double)(end-start)/CLOCKS_PER_SEC );
 	//##########################################################################################
 	// Experiment 2
 	// printf("%d\n", input_size);

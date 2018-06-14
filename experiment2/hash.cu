@@ -181,7 +181,7 @@ int main(int argc,char const *argv[]){
 	cudaMemcpy(func_index,cuda_func_index,sizeof(int)*input_size,cudaMemcpyDeviceToHost);
 
 	
-	// printf("Exp1 Finished. Takes %f of time.\n",(double)(end-start)/CLOCKS_PER_SEC );
+	printf("Exp1 Finished. Takes %f of time.\n",(double)(end-start)/CLOCKS_PER_SEC );
 	//##########################################################################################
 	// Experiment 2
 	// printf("%d\n", input_size);
@@ -193,8 +193,8 @@ int main(int argc,char const *argv[]){
 		int *cuda_results;
 		int *cuda_lookup_table;
 
-		// printf("Insertion Finished. Start Exp2:\n");
-		// printf("percent=%f\n",percent );
+		printf("Insertion Finished. Start Exp2:\n");
+		printf("percent=%f\n",percent );
 
 		lookup_table  = (int*)malloc(sizeof(int)*input_size);
 		results = (int *)malloc(sizeof(int)*input_size);
@@ -224,11 +224,8 @@ int main(int argc,char const *argv[]){
 		for(i =0;i<input_size;i++){
 			counter +=  results[i];
 		}
-		if (counter>=(int)(input_size*percent)){
-			// printf("counter = %d,percent = %d\n", counter,(int)(input_size*percent));
-			printf("%f\n",(double)(end-start)/CLOCKS_PER_SEC);
-		}
-		
+		printf("counter = %d,percent = %d\n", counter,(int)(input_size*percent));
+		printf("time = %f\n",(double)(end-start)/CLOCKS_PER_SEC);
 		free(lookup_table);
 		free(results);
 		cudaFree(cuda_results);
